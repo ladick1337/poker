@@ -24,7 +24,7 @@
     "sqlite3": "^5.0.8"
   },
   "engines": {
-    "node": "^10.16",
+    "node": "^12.x",
     "yarn": "^1.19"
   },
   "devDependencies": {
