@@ -248,6 +248,8 @@ socket.on('reveal', function (data) {
         money: p.money,
         endHand: p.hand,
         buyIns: p.buyIns,
+        pwins: data.pwins,
+        pmatches: data.pmatches,
       });
     })
   );
@@ -614,6 +616,8 @@ function renderOpponent(name, data) {
             '</div></div></div>'
           );
         } else {
+          console.log('pm: '+data.pmatches);
+          console.log('pw: '+data.pmatches);
           return (
             '<div class="col s12 m2 opponentCard"><div class="card green darken-2" ><div class="card-content white-text"><span class="card-title">' +
             name +

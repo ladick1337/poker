@@ -777,6 +777,8 @@ const Game = function (name, host) {
         bets: this.roundData.bets,
         winners: winnersUsernames,
         hand: this.players[pn].getStatus(),
+        pmatches: this.players[pn].getPmatches(),
+        pwins: this.players[pn].getPwins(),
       });
     }
   };
@@ -1003,6 +1005,8 @@ const Game = function (name, host) {
         }
       }
       this.moveOntoNextPlayer();
+
+      this.rerender();
       return true;
     } else {
       if (
