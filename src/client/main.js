@@ -264,13 +264,13 @@ socket.on('reveal', function (data) {
         money: p.money,
         endHand: p.hand,
         buyIns: p.buyIns,
-        pwins: data.pwins,
-        pmatches: data.pmatches,
-        pRounds: data.pRounds,
-        pRoundsWins: data.pRoundsWins,
-        pFolds: data.pFolds,
-        pRevealsNum: data.pRevealsNum,
-        pBluffsNum: data.pBluffsNum,
+        pwins: p.pwins,
+        pmatches: p.pmatches,
+        pRounds: p.pRounds,
+        pRoundsWins: p.pRoundsWins,
+        pFolds: p.pFolds,
+        pRevealsNum: p.pRevealsNum,
+        pBluffsNum: p.pBluffsNum,
       });
     })
   );

@@ -717,6 +717,11 @@ const Game = function (name, host) {
     } else {
       this.log('fatal error: winner cannot be calculated');
     }
+    // if(winnerData.length > 1){
+    //   for(let k = 0;k<winnerData.length;k++){
+    //     winnerData[k].player.bluffsNum--;
+    //   }
+    // }
     const res = { winnerData: winnerData, playersData: playerArray };
     return res;
   };
@@ -797,6 +802,13 @@ const Game = function (name, host) {
         money: this.players[i].getMoney(),
         buyIns: this.players[i].buyIns,
         gain: winData ? winData.gain : null,
+        pmatches: this.players[i].getPmatches(),
+        pwins: this.players[i].getPwins(),
+        pRounds: this.players[i].getPRounds(),
+        pRoundsWins: this.players[i].getPRoundsWins(),
+        pFolds: this.players[i].getPFolds(),
+        pRevealsNum: this.players[i].getRevealsNum(),
+        pBluffsNum: this.players[i].getBluffsNum(),
       });
     }
     const winnersUsernames = winners
