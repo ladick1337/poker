@@ -14,6 +14,11 @@ const Player = function (playerName, socket, debug) {
   this.username = playerName;
   this.pmatches = 0;
   this.pwins = 0;
+  this.pRounds = -1;
+  this.pRoundsWins = 0;
+  this.revealsNum = 0;
+  this.bluffsNum = 0;
+  this.pFolds = 0;
 
   let sql = `SELECT * FROM players WHERE name='${this.username}'`;
 
@@ -29,7 +34,7 @@ const Player = function (playerName, socket, debug) {
         (err) => {
           if(err) return console.error(err.message);
     
-          console.log('A new player has added');
+          console.log('A new player has added :'+this.username);
         }
       );
       return console.error(err.message);
@@ -53,7 +58,7 @@ const Player = function (playerName, socket, debug) {
       (err) => {
         if(err) return console.error(err.message);
 
-        console.log('A new player has added');
+        console.log('A new player has added :'+this.username);
       }
       );
     }
@@ -74,7 +79,7 @@ const Player = function (playerName, socket, debug) {
       (err) => {
         if(err) return console.error(err.message);
   
-        console.log(this.username + ' matchess++');
+        console.log(this.username + ' matchess++ :' +this.pmatches+1);
 
         sql = `SELECT * FROM players`;
 
@@ -154,6 +159,23 @@ const Player = function (playerName, socket, debug) {
   this.getPwins = () => {
     return this.pwins;
   };
+  this.getPRounds = () => {
+    return this.pRounds;
+  };
+  this.getPRoundsWins = () => {
+    return this.pRoundsWins;
+  };
+  this.getRevealsNum = () => {
+    return this.revealsNum;
+  };
+  this.getBluffsNum = () => {
+    return this.bluffsNum;
+  };
+  this.getPFolds = () => {
+    return this.pFolds;
+  };
+
+
 
   this.emit = (eventName, payload) => {
     this.socket.emit(eventName, payload);

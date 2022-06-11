@@ -155,8 +155,18 @@ socket.on('dealt', function (data) {
 socket.on('rerender', function (data) {
   if (data.myBet == 0) {
     $('#usernamesCards').text(data.username + ' - My Cards');
+    let myhtml = '';
+    for(let i=0;i<data.possibilitiesC.handChances.length;i++){
+      myhtml += data.possibilitiesC.handChances[i].name + ' : ' + (data.possibilitiesC.handChances[i].count/data.possibilitiesC.count*100).toFixed(2) + '%' + '<br>';
+    }
+    $('#mychances').html(myhtml);
   } else {
     $('#usernamesCards').text(data.username + ' - My Bet: $' + data.myBet);
+    let myhtml = '';
+    for(let i=0;i<data.possibilitiesC.handChances.length;i++){
+      myhtml += data.possibilitiesC.handChances[i].name + ' : ' + (data.possibilitiesC.handChances[i].count/data.possibilitiesC.count*100).toFixed(2) + '%' + '<br>';
+    }
+    $('#mychances').html(myhtml);
   }
   if (data.community != undefined)
     $('#communityCards').html(
@@ -187,6 +197,11 @@ socket.on('rerender', function (data) {
         isChecked: p.isChecked,
         pmatches: p.pmatches,
         pwins: p.pwins,
+        pRounds: p.pRounds,
+        pRoundsWins: p.pRoundsWins,
+        pFolds: p.pFolds,
+        pRevealsNum: p.pRevealsNum,
+        pBluffsNum: p.pBluffsNum,
       });
     })
   );
@@ -229,6 +244,7 @@ socket.on('reveal', function (data) {
   $('#usernameRaise').hide();
 
   for (var i = 0; i < data.winners.length; i++) {
+    data.winners[i].pRoundsWins++;
     if (data.winners[i] == data.username) {
       Materialize.toast('You won the hand!', 4000);
       break;
@@ -250,12 +266,19 @@ socket.on('reveal', function (data) {
         buyIns: p.buyIns,
         pwins: data.pwins,
         pmatches: data.pmatches,
+        pRounds: data.pRounds,
+        pRoundsWins: data.pRoundsWins,
+        pFolds: data.pFolds,
+        pRevealsNum: data.pRevealsNum,
+        pBluffsNum: data.pBluffsNum,
       });
     })
   );
 });
 
 socket.on('endHand', function (data) {
+  console.log('d: ');
+  console.log(data);
   $('#usernameFold').hide();
   $('#usernameCheck').hide();
   $('#usernameBet').hide();
@@ -285,8 +308,13 @@ socket.on('endHand', function (data) {
         money: p.money,
         blind: '',
         bets: data.bets,
-        pmatches: data.pmatches,
-        pwins: data.pwins,
+        pmatches: p.pmatches,
+        pwins: p.pwins,
+        pRounds: p.pRounds,
+        pRoundsWins: p.pRoundsWins,
+        pFolds: p.pFolds,
+        pRevealsNum: p.pRevealsNum,
+        pBluffsNum: p.pBluffsNum,
       });
     })
   );
@@ -443,7 +471,16 @@ function renderOpponent(name, data) {
         '<div class="player-stats__item">WinRate: '+
         (data.pwins/data.pmatches*100).toFixed(2) + "%" +
         '</div>' +
-        '</div>'
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
         +
         '<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
         data.blind +
@@ -466,16 +503,25 @@ function renderOpponent(name, data) {
             name +
             '<br />Check</span>' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +
             '<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
@@ -496,16 +542,25 @@ function renderOpponent(name, data) {
             name +
             '</span>' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +
             '<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
@@ -528,16 +583,25 @@ function renderOpponent(name, data) {
             bet +
             '</span>'+
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +
             '<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
@@ -561,16 +625,25 @@ function renderOpponent(name, data) {
             '<br />Check</span>'+
             '<br />Check' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +
             '<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
@@ -592,16 +665,25 @@ function renderOpponent(name, data) {
             '</span>'+
             '<br />Check' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
             '<br />' +
@@ -626,16 +708,25 @@ function renderOpponent(name, data) {
             '</span>'+
             '<br />Check' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
             '<br />' +
@@ -672,7 +763,16 @@ function renderOpponent(name, data) {
         '<div class="player-stats__item">WinRate: '+
         (data.pwins/data.pmatches*100).toFixed(2) + "%" +
         '</div>' +
-        '</div>'
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
         +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
         data.blind +
         '<br />' +
@@ -690,16 +790,25 @@ function renderOpponent(name, data) {
             '<br />Check</span>'+
             '<br />Check' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
             '<br />' +
@@ -715,16 +824,25 @@ function renderOpponent(name, data) {
             '</span>'+
             '<br />Check' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
             '<br />' +
@@ -742,16 +860,25 @@ function renderOpponent(name, data) {
             '</span>'+
             '<br />Check' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
             '<br /><br />' +
@@ -769,16 +896,25 @@ function renderOpponent(name, data) {
             '<br />Check</span>'+
             '<br />Check' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
             '<br />' +
@@ -794,16 +930,25 @@ function renderOpponent(name, data) {
             '</span>'+
             '<br />Check' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
             '<br />' +
@@ -821,16 +966,25 @@ function renderOpponent(name, data) {
             '</span>'+
             '<br />Check' +
             '<div class="player-stats">' +
-            '<div class="player-stats__item">Games played: '+
-            data.pmatches +
-            '</div>' +
-            '<div class="player-stats__item">Wins: '+
-            data.pwins +
-            '</div>' +
-            '<div class="player-stats__item">WinRate: '+
-            (data.pwins/data.pmatches*100).toFixed(2) + "%" +
-            '</div>' +
-            '</div>'
+        '<div class="player-stats__item">Games played: '+
+        data.pmatches +
+        '</div>' +
+        '<div class="player-stats__item">Wins: '+
+        data.pwins +
+        '</div>' +
+        '<div class="player-stats__item">WinRate: '+
+        (data.pwins/data.pmatches*100).toFixed(2) + "%" +
+        '</div>' +
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
             +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br />' +
             data.blind +
             '<br />' +
@@ -873,7 +1027,16 @@ function renderOpponentCards(name, data) {
         '<div class="player-stats__item">WinRate: '+
         (data.pwins/data.pmatches*100).toFixed(2) + "%" +
         '</div>' +
-        '</div>'
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
         +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br /><br /></p></div><div class="card-action green darken-3 white-text center-align" style="font-size: 20px;">$' +
         data.money +
         ' (' +
@@ -900,7 +1063,16 @@ function renderOpponentCards(name, data) {
         '<div class="player-stats__item">WinRate: '+
         (data.pwins/data.pmatches*100).toFixed(2) + "%" +
         '</div>' +
-        '</div>'
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
         +'<p><div class="center-align"> ' +
         renderOpponentCard(data.cards[0]) +
         renderOpponentCard(data.cards[1]) +
@@ -933,7 +1105,16 @@ function renderOpponentCards(name, data) {
         '<div class="player-stats__item">WinRate: '+
         (data.pwins/data.pmatches*100).toFixed(2) + "%" +
         '</div>' +
-        '</div>'
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
         +'<p><div class="center-align"><div class="blankCard" id="opponent-card" /><div class="blankCard" id="opponent-card" /></div><br /><br /><br /><br /><br /><br /></p></div><div class="card-action green darken-3 white-text center-align" style="font-size: 20px;">$' +
         data.money +
         '</div></div></div>'
@@ -955,7 +1136,16 @@ function renderOpponentCards(name, data) {
         '<div class="player-stats__item">WinRate: '+
         (data.pwins/data.pmatches*100).toFixed(2) + "%" +
         '</div>' +
-        '</div>'
+        '<div class="rounds-stats">' +
+        'Rounds Played: ' + data.pRounds + '<br>' +
+        'Round Wins: ' + data.pRoundsWins + '<br>' +
+        'Rounds WinRate: ' + (data.pRoundsWins/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Rounds Folded: ' + data.pFolds + '<br>' +
+        'Folds % : ' + (data.pFolds/data.pRounds*100).toFixed(2) + "%" + '<br>' +
+        'Reveals : ' + data.pRevealsNum + '<br>' +
+        'Bluffs : ' + data.pBluffsNum + '<br>' +
+        'Bluffs % : ' + (data.pBluffsNum/data.pRevealsNum*100).toFixed(2) + "%" + '<br>' +
+        '</div></div>'
         +'<p><div class="center-align"> ' +
         renderOpponentCard(data.cards[0]) +
         renderOpponentCard(data.cards[1]) +

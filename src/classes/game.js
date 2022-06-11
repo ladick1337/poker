@@ -57,7 +57,9 @@
 const Deck = require('./deck.js');
 const Player = require('./player.js');
 const Hand = require('pokersolver').Hand;
-
+const { calculateEquity } = require('poker-odds');
+const iterations = 100000 // optional
+const exhaustive = false // optional
 const Game = function (name, host) {
   
   this.deck = new Deck();
@@ -160,6 +162,7 @@ const Game = function (name, host) {
     this.log('deck len' + this.deck.cards.length);
     for (pn of this.players) {
       pn.allIn = false;
+      pn.pRounds++;
     }
 
     // Инициализируем диллера
@@ -302,7 +305,10 @@ const Game = function (name, host) {
 
   this.rerender = () => {
     let playersData = [];
+    let phands = [];
+    let pboard = this.convertCardsFormat(this.community);
     for (let pn = 0; pn < this.getNumPlayers(); pn++) {
+      phands.push(this.convertCardsFormat(this.players[pn].cards));
       playersData.push({
         username: this.players[pn].getUsername(),
         status: this.players[pn].getStatus(),
@@ -312,8 +318,18 @@ const Game = function (name, host) {
         isChecked: this.playerIsChecked(this.players[pn]),
         pmatches: this.players[pn].getPmatches(),
         pwins: this.players[pn].getPwins(),
+        pRounds: this.players[pn].getPRounds(),
+        pRoundsWins: this.players[pn].getPRoundsWins(),
+        pFolds: this.players[pn].getPFolds(),
+        pRevealsNum: this.players[pn].getRevealsNum(),
+        pBluffsNum: this.players[pn].getBluffsNum(),
       });
     }
+    start = new Date();
+    let possibilitiesC = calculateEquity(phands, pboard, iterations, exhaustive);
+    console.log(possibilitiesC);
+    end = new Date();
+    console.log('Operation took ' + (end.getTime() - start.getTime()) + ' msec');
     for (let pn = 0; pn < this.getNumPlayers(); pn++) {
       this.players[pn].emit('rerender', {
         community: this.community,
@@ -330,6 +346,7 @@ const Game = function (name, host) {
         myBlind: this.players[pn].getBlind(),
         roundInProgress: this.roundInProgress,
         buyIns: this.players[pn].buyIns,
+        possibilitiesC: possibilitiesC[pn],
       });
     }
   };
@@ -435,6 +452,10 @@ const Game = function (name, host) {
         nonFolderPlayer = this.players[i];
       }
     }
+    if(numNonFolds == 1){
+      this.players[this.players.indexOf(nonFolderPlayer)].pRoundsWins++;
+      // nonFolderPlayer.pRoundsWins++;
+    }
     return [numNonFolds, nonFolderPlayer];
   };
 
@@ -481,6 +502,7 @@ const Game = function (name, host) {
         // все сбросили, начинаем новый раунд, игрок забирает банк
         this.log('everyone folded except one');
         nonFolderPlayer.money = this.getCurrentPot() + nonFolderPlayer.money;
+        // nonFolderPlayer.pRoundsWins++;
         this.endHandAllFold(nonFolderPlayer.getUsername());
         handOver = true;
       } else {
@@ -660,6 +682,8 @@ const Game = function (name, host) {
     let playerArray = [];
     for (let i = 0; i < this.players.length; i++) {
       if (this.players[i].getStatus() != 'Fold') {
+        this.players[i].revealsNum++;
+        console.log(this.players);
         let h = Hand.solve(
           this.convertCardsFormat(this.players[i].cards.concat(this.community))
         );
@@ -677,12 +701,16 @@ const Game = function (name, host) {
           if (
             this.arraysEqual(playerHand.hand.cards.sort(), winnerArray.sort())
           ) {
+            playerHand.player.pRoundsWins++;
             winnerData.push({
               player: playerHand.player,
               rank: playerHand.hand.rank,
               handTitle: playerHand.hand.name,
             });
             break;
+          } else {
+            playerHand.player.bluffsNum++;
+            console.log(this.players);
           }
         }
       }
@@ -733,6 +761,13 @@ const Game = function (name, host) {
         username: this.players[i].getUsername(),
         money: this.players[i].getMoney(),
         text: this.players[i].getStatus(),
+        pmatches: this.players[i].getPmatches(),
+        pwins: this.players[i].getPwins(),
+        pRounds: this.players[i].getPRounds(),
+        pRoundsWins: this.players[i].getPRoundsWins(),
+        pFolds: this.players[i].getPFolds(),
+        pRevealsNum: this.players[i].getRevealsNum(),
+        pBluffsNum: this.players[i].getBluffsNum(),
       });
     }
     for (let pn = 0; pn < this.getNumPlayers(); pn++) {
@@ -744,8 +779,6 @@ const Game = function (name, host) {
         money: this.players[pn].getMoney(),
         cards: cardData,
         bets: this.roundData.bets,
-        pmatches: this.players[pn].getPmatches(),
-        pwins: this.players[pn].getPwins(),
       });
     }
   };
@@ -779,6 +812,11 @@ const Game = function (name, host) {
         hand: this.players[pn].getStatus(),
         pmatches: this.players[pn].getPmatches(),
         pwins: this.players[pn].getPwins(),
+        pRounds: this.players[pn].getPRounds(),
+        pRoundsWins: this.players[pn].getPRoundsWins(),
+        pFolds: this.players[pn].getPFolds(),
+        pRevealsNum: this.players[pn].getRevealsNum(),
+        pBluffsNum: this.players[pn].getBluffsNum(),
       });
     }
   };
@@ -937,6 +975,7 @@ const Game = function (name, host) {
       preFoldBetAmount += roundDataStage.bet;
     }
     player.setStatus('Fold');
+    player.pFolds++;
     this.foldPot = this.foldPot + preFoldBetAmount;
     if (
       this.getCurrentRoundBets().some((a) => a.player == player.getUsername())
